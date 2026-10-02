@@ -1,6 +1,7 @@
-const V = 'edoc-farmer-v2';
+const V = 'edoc-farmer-v3';
 const SHELL = ['./', './index.html', './manifest.webmanifest',
-  './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
+  './icon-192.png', './icon-512.png', './apple-touch-icon.png', './favicon-32.png'];
+const NAV_TIMEOUT = 4000; // สัญญาณอ่อน: รอเครือข่ายไม่เกิน 4 วินาที แล้วใช้แคชแทน
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(V).then(c => c.addAll(SHELL)));
@@ -18,6 +19,8 @@ self.addEventListener('activate', e => {
   );
 });
 
+const timeout = ms => new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms));
+
 self.addEventListener('fetch', e => {
   const r = e.request;
   if (r.method !== 'GET') return;
@@ -25,13 +28,19 @@ self.addEventListener('fetch', e => {
   if (u.origin !== location.origin) return; // ไม่แตะ script.google.com
 
   if (r.mode === 'navigate') {
+    const net = fetch(r).then(res => {
+      if (res.ok) { const cp = res.clone(); caches.open(V).then(c => c.put('./index.html', cp)); }
+      return res;
+    });
+    net.catch(() => {}); // กัน unhandled rejection เมื่อ timeout ชนะก่อน
     e.respondWith(
-      fetch(r)
-        .then(res => { if (res.ok) { const cp = res.clone(); caches.open(V).then(c => c.put('./index.html', cp)); } return res; })
-        .catch(() => caches.match('./index.html'))
+      Promise.race([net, timeout(NAV_TIMEOUT)])
+        .catch(() => caches.match('./index.html').then(hit => hit || net))
     );
     return;
   }
+
+  // ไฟล์ static: ใช้แคชก่อน แล้วอัปเดตเบื้องหลัง
   e.respondWith(
     caches.match(r).then(hit => {
       const net = fetch(r)

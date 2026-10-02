@@ -23,7 +23,7 @@
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html, body { margin:0; height:100%; width:100%; background:var(--cream); overflow:hidden; overscroll-behavior:none;
     font-family:"Sarabun","Noto Sans Thai",system-ui,-apple-system,"Segoe UI",sans-serif; -webkit-font-smoothing:antialiased; }
-  button { font-family:inherit; }
+  button { font-family:inherit; touch-action:manipulation; }
 
   /* ---------- App shell ---------- */
   #app { position:fixed; inset:0; height:100vh; height:100dvh; display:flex; flex-direction:column; background:#fff;
@@ -65,6 +65,9 @@
   /* ---------- Full-screen message (offline / slow) ---------- */
   .msg { position:fixed; inset:0; z-index:80; display:none; flex-direction:column; align-items:center; justify-content:center; gap:12px; background:#fff; text-align:center; padding:28px; }
   body.off #offline, body.slow:not(.off) #slow { display:flex; }
+  #inapp { z-index:200; }
+  body.inapp #inapp { display:flex; }
+  .ol { margin:0; padding:0 0 0 22px; text-align:left; font-size:17px; color:var(--ink); line-height:1.9; max-width:340px; }
   .msg img { width:84px; height:84px; border-radius:20px; }
   .msg h3 { margin:4px 0 0; font-size:22px; color:var(--ink); }
   .msg p { margin:0; font-size:17px; color:var(--muted); line-height:1.5; max-width:340px; }
@@ -147,6 +150,18 @@
   <a class="link" id="btn-open-tab" target="_blank" rel="noopener">เปิดในเบราว์เซอร์</a>
 </div>
 
+<div id="inapp" class="msg">
+  <img src="icon-192.png" alt="">
+  <h3>กรุณาเปิดด้วยเบราว์เซอร์หลัก</h3>
+  <p>หน้านี้เปิดอยู่ในแอปอื่น (เช่น LINE/Facebook) จึงติดตั้งแอปไม่ได้ และบางฟังก์ชันอาจใช้งานไม่ครบ</p>
+  <ol class="ol">
+    <li>แตะ <b>⋯</b> หรือไอคอนเบราว์เซอร์ที่มุมจอ</li>
+    <li>เลือก <b>เปิดใน Safari</b> (iPhone) หรือ <b>เปิดใน Chrome</b> (Android)</li>
+  </ol>
+  <button class="big" id="btn-copy">คัดลอกลิงก์</button>
+  <a class="link" id="btn-inapp-skip" href="#">ใช้งานต่อในหน้านี้</a>
+</div>
+
 <div id="scrim"></div>
 <div id="sheet" role="dialog" aria-labelledby="sheet-title">
   <div class="head">
@@ -159,8 +174,8 @@
   <ol id="ios-steps">
     <li>แตะปุ่มแชร์
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M8 7l4-4 4 4M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
-      ใน Safari</li>
-    <li>เลือก <b>เพิ่มไปยังหน้าจอโฮม</b> (Add to Home Screen)</li>
+      (อยู่แถบล่าง หรือในเมนู ⋯ ของ Safari/Chrome)</li>
+    <li>เลือก <b>เพิ่มไปยังหน้าจอโฮม</b> (Add to Home Screen) — ถ้าไม่เห็น ให้เลื่อนลงหรือแตะ <b>ดูเพิ่มเติม</b></li>
     <li>แตะ <b>เพิ่ม</b> (Add)</li>
   </ol>
   <div class="btns">
@@ -181,6 +196,23 @@
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   let deferred = null;
   $('btn-open-tab').href = APP_URL;
+
+  /* ---------- เบราว์เซอร์ในแอป (LINE / Facebook / IG ฯลฯ) ติดตั้งไม่ได้ ---------- */
+  const ua = navigator.userAgent;
+  const inApp = !standalone && /Line\/|FBAN|FBAV|FB_IAB|Instagram|MicroMessenger|TikTok|Twitter/i.test(ua);
+  if (inApp) {
+    // LINE: ต่อพารามิเตอร์นี้แล้ว LINE จะเปิดลิงก์ในเบราว์เซอร์ภายนอกให้อัตโนมัติ
+    if (/Line\//i.test(ua) && !/[?&]openExternalBrowser=1/.test(location.search)) {
+      location.replace(location.pathname + (location.search ? location.search + '&' : '?') + 'openExternalBrowser=1' + location.hash);
+    }
+    body.classList.add('inapp');
+    $('btn-inapp-skip').onclick = e => { e.preventDefault(); body.classList.remove('inapp'); };
+    $('btn-copy').onclick = async () => {
+      const url = location.origin + location.pathname;
+      try { await navigator.clipboard.writeText(url); $('btn-copy').textContent = 'คัดลอกแล้ว ✓'; }
+      catch (e) { prompt('คัดลอกลิงก์นี้ไปเปิดในเบราว์เซอร์', url); }
+    };
+  }
 
   /* ---------- ข้อความเล็ก ๆ ระหว่างรอโหลด ---------- */
   const tips = ['กำลังเตรียมข้อมูลของคุณ…', 'ตรวจสอบบิลและเอกสารได้ทุกที่', 'แตะปุ่มรีเฟรชด้านบนเพื่อดึงข้อมูลล่าสุด'];
@@ -240,15 +272,15 @@
       const { outcome } = await deferred.userChoice;
       if (outcome !== 'accepted') remember();
       deferred = null; body.classList.remove('can-install');
-    } else close();
+    } else { remember(); close(); }
   };
   $('btn-cancel').onclick = () => { remember(); close(); };
   $('scrim').onclick = () => { remember(); close(); };
   addEventListener('appinstalled', () => { close(); deferred = null; body.classList.remove('can-install'); try { localStorage.removeItem(KEY); } catch (e) {} });
 
-  if (isIOS && !standalone) {
+  if (isIOS && !standalone && !inApp) {
     body.classList.add('ios', 'can-install');
-    $('sheet-desc').textContent = 'iPhone/iPad ติดตั้งผ่านเมนูแชร์ของ Safari ตามขั้นตอนนี้';
+    $('sheet-desc').textContent = 'iPhone/iPad ติดตั้งผ่านเมนูแชร์ของเบราว์เซอร์ ตามขั้นตอนนี้';
     $('btn-install').textContent = 'เข้าใจแล้ว';
     if (!dismissed()) offer();
   }
@@ -266,8 +298,13 @@
         setInterval(() => reg.update().catch(() => {}), 60 * 60 * 1000);
       }).catch(() => {});
     });
+    // รีโหลดเฉพาะตอนอัปเดตจริง (เคยมี SW คุมอยู่แล้ว) ไม่รีโหลดตอนเปิดใช้ครั้งแรก
+    const hadController = !!navigator.serviceWorker.controller;
     let reloading = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloading) return; reloading = true; location.reload(); });
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || reloading) return;
+      reloading = true; location.reload();
+    });
   }
 })();
 </script>
