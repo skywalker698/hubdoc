@@ -167,7 +167,8 @@
 <div id="loggedout" class="msg">
   <img src="icon-192.png" alt="">
   <h3>ออกจากระบบแล้ว</h3>
-  <p>ล้างข้อมูลออกจากหน้าจอเรียบร้อย ปิดแอปได้เลย หรือกดปุ่มด้านล่างเพื่อกลับเข้าใช้งาน</p>
+  <p>ล้างข้อมูลออกจากหน้าจอเรียบร้อยแล้ว</p>
+  <p id="closeHint" style="font-size:16px"></p>
   <button class="big" id="btn-relogin">เข้าใช้งานอีกครั้ง</button>
 </div>
 
@@ -268,6 +269,11 @@
       frame.classList.remove('on');
       frame.src = 'about:blank';          // ล้างหน้าแอปออกจากหน้าจอ/หน่วยความจำ
       body.classList.add('loggedout');
+      // วิธีปิดแอป: เว็บแอปสั่งปิดตัวเองไม่ได้ (iOS ไม่มีทางเลย, Android อาจปิดได้บางเครื่อง) จึงลองปิด + บอกวิธีปัดปิดเอง
+      $('closeHint').textContent = isIOS
+        ? 'ปิดแอป: ปัดขึ้นจากขอบล่างจอค้างไว้ แล้วปัดแอปนี้ขึ้น'
+        : 'ปิดแอป: กดปุ่มสลับแอป (หรือปัดขึ้นค้างไว้) แล้วปัดแอปนี้ทิ้ง';
+      setTimeout(() => { try { window.close(); } catch (_) {} }, 300);
     }
   });
   $('btn-relogin').onclick = () => {

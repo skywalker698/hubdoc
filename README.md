@@ -1,4 +1,4 @@
-# eDoc Smart Hub Farmer (PWA) — v5
+# eDoc Smart Hub Farmer (PWA) — v6
 
 หน้าแอปสำหรับติดตั้งลงมือถือ/คอมพิวเตอร์ ครอบเว็บ Google Apps Script เดิมไว้ใน iframe
 
@@ -18,7 +18,7 @@
 - คำแนะนำติดตั้งบน iOS รองรับทั้ง Safari และ Chrome/Edge
 - เพิ่มโฟลเดอร์ `apps-script/` (ตัวอย่าง doGet + CSS สำหรับมือถือ) — ไม่จำเป็นต้องอัปโหลดขึ้น GitHub Pages
 
-## ปุ่มออกจากระบบ (v5)
+## ปุ่มออกจากระบบ (v6)
 ปุ่ม "ออกจากระบบ" ในแอป Apps Script เดิมเรียก `leaveApp()` ซึ่งใช้ `window.top.close()` / `history.go(-2)` — ใช้ไม่ได้ใน PWA/iframe
 v5: หน้า Apps Script ส่ง postMessage `edoc-logout` -> ตัวครอบล้างหน้าแอป (about:blank) และแสดงหน้า "ออกจากระบบแล้ว" + ปุ่ม "เข้าใช้งานอีกครั้ง"
 **ต้องอัปเดตทั้ง 2 ฝั่ง:**
@@ -37,4 +37,4 @@ v5: หน้า Apps Script ส่ง postMessage `edoc-logout` -> ตัวค
 - ช่อง input ในหน้า Apps Script ควรฟอนต์ ≥ 16px ดู `apps-script/mobile-snippet.html`
 
 ## อัปเดตเวอร์ชัน
-เมื่อแก้ไฟล์ในแอป ให้เปลี่ยนเลขเวอร์ชัน `V` ใน `sw.js` (ตอนนี้ edoc-farmer-v5) — ผู้ใช้จะเห็นแถบ "มีเวอร์ชันใหม่ กดอัปเดต"
+เมื่อแก้ไฟล์ในแอป ให้เปลี่ยนเลขเวอร์ชัน `V` ใน `sw.js` (ตอนนี้ edoc-farmer-v6) — ผู้ใช้จะเห็นแถบ "มีเวอร์ชันใหม่ กดอัปเดต"
