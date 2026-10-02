@@ -1,4 +1,4 @@
-# eDoc Smart Hub Farmer (PWA) — v3
+# eDoc Smart Hub Farmer (PWA) — v5
 
 หน้าแอปสำหรับติดตั้งลงมือถือ/คอมพิวเตอร์ ครอบเว็บ Google Apps Script เดิมไว้ใน iframe
 
@@ -18,10 +18,14 @@
 - คำแนะนำติดตั้งบน iOS รองรับทั้ง Safari และ Chrome/Edge
 - เพิ่มโฟลเดอร์ `apps-script/` (ตัวอย่าง doGet + CSS สำหรับมือถือ) — ไม่จำเป็นต้องอัปโหลดขึ้น GitHub Pages
 
-## ปุ่มออกจากระบบ (v4)
-ถ้าปุ่มออกจากระบบในหน้า Apps Script ไม่ทำงานเมื่อเปิดผ่าน PWA/GitHub Pages (แต่ทำงานเมื่อเปิดลิงก์ Apps Script ตรง)
-ให้ใช้ `apps-script/logout-bridge.html` — ปุ่มจะส่ง postMessage มาบอกตัวครอบให้โหลดหน้าล็อกอินใหม่
-**ต้องอัปเดตทั้ง 2 ฝั่ง:** (1) อัปโหลดไฟล์ชุดนี้ขึ้น GitHub (2) แก้โค้ด Apps Script แล้ว Deploy > Manage deployments > แก้ไข > Version: New version (URL เดิม)
+## ปุ่มออกจากระบบ (v5)
+ปุ่ม "ออกจากระบบ" ในแอป Apps Script เดิมเรียก `leaveApp()` ซึ่งใช้ `window.top.close()` / `history.go(-2)` — ใช้ไม่ได้ใน PWA/iframe
+v5: หน้า Apps Script ส่ง postMessage `edoc-logout` -> ตัวครอบล้างหน้าแอป (about:blank) และแสดงหน้า "ออกจากระบบแล้ว" + ปุ่ม "เข้าใช้งานอีกครั้ง"
+**ต้องอัปเดตทั้ง 2 ฝั่ง:**
+1. อัปโหลดไฟล์ชุดนี้ขึ้น GitHub (ทับของเดิม)
+2. แก้ Apps Script ตาม `apps-script/PATCH-1-js.html.txt` (แทนที่ `leaveApp()` ใน js.html) และ `apps-script/PATCH-2-index.html.txt`
+   แล้ว Deploy > Manage deployments > แก้ไข > Version: New version (URL เดิม)
+หมายเหตุ: การเข้าถึงแอปอิงบัญชี Google ปุ่มนี้ไม่ได้ออกจากบัญชี Google ของเครื่อง (ต้องออกจากบัญชี Google เอง)
 
 ## ข้อจำกัดของ iOS
 - iOS ไม่มีปุ่มติดตั้งอัตโนมัติ ผู้ใช้ต้องกด แชร์ → เพิ่มไปยังหน้าจอโฮม เอง (แอปมีหน้าสอนให้)
@@ -33,4 +37,4 @@
 - ช่อง input ในหน้า Apps Script ควรฟอนต์ ≥ 16px ดู `apps-script/mobile-snippet.html`
 
 ## อัปเดตเวอร์ชัน
-เมื่อแก้ไฟล์ในแอป ให้เปลี่ยนเลขเวอร์ชัน `V` ใน `sw.js` (ตอนนี้ edoc-farmer-v4) — ผู้ใช้จะเห็นแถบ "มีเวอร์ชันใหม่ กดอัปเดต"
+เมื่อแก้ไฟล์ในแอป ให้เปลี่ยนเลขเวอร์ชัน `V` ใน `sw.js` (ตอนนี้ edoc-farmer-v5) — ผู้ใช้จะเห็นแถบ "มีเวอร์ชันใหม่ กดอัปเดต"

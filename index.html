@@ -65,6 +65,8 @@
   /* ---------- Full-screen message (offline / slow) ---------- */
   .msg { position:fixed; inset:0; z-index:80; display:none; flex-direction:column; align-items:center; justify-content:center; gap:12px; background:#fff; text-align:center; padding:28px; }
   body.off #offline, body.slow:not(.off) #slow { display:flex; }
+  #loggedout { z-index:150; }
+  body.loggedout #loggedout { display:flex; }
   #inapp { z-index:200; }
   body.inapp #inapp { display:flex; }
   .ol { margin:0; padding:0 0 0 22px; text-align:left; font-size:17px; color:var(--ink); line-height:1.9; max-width:340px; }
@@ -162,6 +164,13 @@
   <a class="link" id="btn-inapp-skip" href="#">ใช้งานต่อในหน้านี้</a>
 </div>
 
+<div id="loggedout" class="msg">
+  <img src="icon-192.png" alt="">
+  <h3>ออกจากระบบแล้ว</h3>
+  <p>ล้างข้อมูลออกจากหน้าจอเรียบร้อย ปิดแอปได้เลย หรือกดปุ่มด้านล่างเพื่อกลับเข้าใช้งาน</p>
+  <button class="big" id="btn-relogin">เข้าใช้งานอีกครั้ง</button>
+</div>
+
 <div id="scrim"></div>
 <div id="sheet" role="dialog" aria-labelledby="sheet-title">
   <div class="head">
@@ -249,22 +258,30 @@
      ให้ฝั่ง Apps Script ส่ง {type:'edoc-logout'} มาแทน แล้วตัวครอบจะโหลดหน้าใหม่ให้ */
   const GOOGLE_ORIGIN = /^https:\/\/([a-z0-9-]+\.)*(googleusercontent\.com|google\.com)$/i;
   addEventListener('message', e => {
-    if (!GOOGLE_ORIGIN.test(e.origin)) return;
+    // origin 'null' = iframe แบบ sandbox ไม่มี allow-same-origin (การกระทำนี้แค่แสดงหน้าออกจากระบบ ไม่เสี่ยง)
+    if (!GOOGLE_ORIGIN.test(e.origin) && e.origin !== 'null') return;
     const d = e.data || {};
     if (d.type === 'edoc-logout') {
-      try { e.source.postMessage({ type: 'edoc-pwa-ack' }, e.origin); } catch (_) {}
+      try { e.source.postMessage({ type: 'edoc-pwa-ack' }, e.origin === 'null' ? '*' : e.origin); } catch (_) {}
       body.classList.remove('slow');
-      frame.src = APP_URL + (APP_URL.includes('?') ? '&' : '?') + 'logout=' + Date.now();
-      armSlow();
+      clearTimeout(slowTimer);
+      frame.classList.remove('on');
+      frame.src = 'about:blank';          // ล้างหน้าแอปออกจากหน้าจอ/หน่วยความจำ
+      body.classList.add('loggedout');
     }
   });
+  $('btn-relogin').onclick = () => {
+    body.classList.remove('loggedout');
+    frame.classList.add('on');
+    reload();
+  };
 
   /* ---------- Offline ---------- */
   const net = () => {
     body.classList.toggle('off', !navigator.onLine);
     $('status').textContent = navigator.onLine ? 'ออนไลน์' : 'ออฟไลน์';
   };
-  addEventListener('online', () => { net(); reload(); });
+  addEventListener('online', () => { net(); if (!body.classList.contains('loggedout')) reload(); });
   addEventListener('offline', net); net();
   $('btn-retry').onclick = () => { if (navigator.onLine) { body.classList.remove('off'); net(); reload(); } };
 
