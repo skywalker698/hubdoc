@@ -244,6 +244,21 @@
   $('btn-refresh').onclick = reload;
   $('btn-slow-retry').onclick = reload;
 
+  /* ---------- สะพานสื่อสารกับหน้า Apps Script (postMessage) ----------
+     หน้า Apps Script ถูกฝังใน iframe ซ้อนสองชั้น จึงสั่ง window.top.location / reload ของหน้าหลักไม่ได้
+     ให้ฝั่ง Apps Script ส่ง {type:'edoc-logout'} มาแทน แล้วตัวครอบจะโหลดหน้าใหม่ให้ */
+  const GOOGLE_ORIGIN = /^https:\/\/([a-z0-9-]+\.)*(googleusercontent\.com|google\.com)$/i;
+  addEventListener('message', e => {
+    if (!GOOGLE_ORIGIN.test(e.origin)) return;
+    const d = e.data || {};
+    if (d.type === 'edoc-logout') {
+      try { e.source.postMessage({ type: 'edoc-pwa-ack' }, e.origin); } catch (_) {}
+      body.classList.remove('slow');
+      frame.src = APP_URL + (APP_URL.includes('?') ? '&' : '?') + 'logout=' + Date.now();
+      armSlow();
+    }
+  });
+
   /* ---------- Offline ---------- */
   const net = () => {
     body.classList.toggle('off', !navigator.onLine);

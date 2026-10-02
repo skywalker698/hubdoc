@@ -1,4 +1,4 @@
-const V = 'edoc-farmer-v3';
+const V = 'edoc-farmer-v4';
 const SHELL = ['./', './index.html', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './apple-touch-icon.png', './favicon-32.png'];
 const NAV_TIMEOUT = 4000; // สัญญาณอ่อน: รอเครือข่ายไม่เกิน 4 วินาที แล้วใช้แคชแทน
